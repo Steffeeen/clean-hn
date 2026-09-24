@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Clean HN",
+  "version": "0.1.0",
+  "description": "A clean, focused reading interface for Hacker News.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://news.ycombinator.com/*"],
+      "css": ["styles.css"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
