@@ -272,6 +272,11 @@
     padding: 11px 18px;
   }
 
+  .modern-hn .mhn-more:link,
+  .modern-hn .mhn-more:visited {
+    color: var(--foreground);
+  }
+
   .mhn-story-hero {
     border-bottom: 1px solid var(--border);
     padding: 0 0 24px;
