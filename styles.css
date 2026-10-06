@@ -314,7 +314,8 @@
     max-width: 900px;
   }
 
-  .mhn-story-text a {
+  .modern-hn .mhn-story-text a:link,
+  .modern-hn .mhn-story-text a:visited {
     color: var(--accent);
   }
 
