@@ -234,20 +234,60 @@
       commentsSection.append(comment);
     }
 
-    commentsSection.addEventListener("click", (event) => {
+    const storageKey = `collapsedComments:${story.id}`;
+    const collapsedIds = new Set();
+    const saveCollapsedState = () => {
+      globalThis.chrome?.storage?.local.get(null, (saved) => {
+        const entries = Object.entries(saved).filter(([key]) => key.startsWith("collapsedComments:") && key !== storageKey);
+        if (collapsedIds.size) {
+          const state = { ids: [...collapsedIds], lastUsed: Date.now() };
+          entries.unshift([storageKey, state]);
+          chrome.storage.local.set({ [storageKey]: state });
+        }
+        entries.sort((a, b) => (b[1].lastUsed || 0) - (a[1].lastUsed || 0));
+        const expired = entries.slice(100).map(([key]) => key);
+        if (!collapsedIds.size) expired.push(storageKey);
+        if (expired.length) chrome.storage.local.remove(expired);
+      });
+    };
+    const comments = [...commentsSection.querySelectorAll(".mhn-comment")];
+    const updateComments = () => {
+      let collapsedIndent = null;
+      for (const comment of comments) {
+        const indent = Number(comment.dataset.indent);
+        const collapsed = collapsedIds.has(comment.id);
+        const button = comment.querySelector(".mhn-collapse");
+        button.setAttribute("aria-expanded", String(!collapsed));
+        button.setAttribute("aria-label", collapsed ? "Expand comment thread" : "Collapse comment thread");
+        comment.classList.toggle("is-collapsed", collapsed);
+        comment.hidden = collapsedIndent !== null && indent > collapsedIndent;
+        if (!comment.hidden) collapsedIndent = collapsed ? indent : null;
+      }
+    };
+
+    const restored = new Promise((resolve) => {
+      if (!globalThis.chrome?.storage?.local) {
+        resolve();
+        return;
+      }
+      chrome.storage.local.get({ [storageKey]: [] }, (saved) => {
+        const state = saved[storageKey];
+        for (const id of Array.isArray(state) ? state : state.ids) collapsedIds.add(id);
+        updateComments();
+        saveCollapsedState();
+        resolve();
+      });
+    });
+
+    commentsSection.addEventListener("click", async (event) => {
       const button = event.target.closest(".mhn-collapse");
       if (!button) return;
+      await restored;
       const comment = button.closest(".mhn-comment");
-      const indent = Number(comment.dataset.indent);
-      const collapsed = button.getAttribute("aria-expanded") === "false";
-      button.setAttribute("aria-expanded", String(collapsed));
-      comment.classList.toggle("is-collapsed", !collapsed);
-
-      let sibling = comment.nextElementSibling;
-      while (sibling?.classList.contains("mhn-comment") && Number(sibling.dataset.indent) > indent) {
-        sibling.hidden = !collapsed;
-        sibling = sibling.nextElementSibling;
-      }
+      if (collapsedIds.has(comment.id)) collapsedIds.delete(comment.id);
+      else collapsedIds.add(comment.id);
+      updateComments();
+      saveCollapsedState();
     });
 
     main.append(hero, commentsSection);
