@@ -125,7 +125,7 @@
       meta.className = "mhn-story-meta";
       const site = row.querySelector(".sitestr")?.closest("a")?.cloneNode(true);
       const score = details?.querySelector(".score")?.cloneNode(true);
-      const user = details?.querySelector(".hnuser")?.cloneNode(true);
+      const user = details?.querySelector('a[href^="user?id="]')?.cloneNode(true);
       const age = details?.querySelector(".age a")?.cloneNode(true);
       const discussion = [...(details?.querySelectorAll("a") || [])].find((link) =>
         /comment|discuss/i.test(link.textContent)
@@ -172,7 +172,7 @@
     meta.className = "mhn-hero-meta";
     const site = story.querySelector(".sitestr")?.closest("a")?.cloneNode(true);
     const score = subline?.querySelector(".score")?.cloneNode(true);
-    const user = subline?.querySelector(".hnuser")?.cloneNode(true);
+    const user = subline?.querySelector('a[href^="user?id="]')?.cloneNode(true);
     const age = subline?.querySelector(".age a")?.cloneNode(true);
     [site, score, user, age].filter(Boolean).forEach((value, index) => {
       if (index) meta.append(separator());
@@ -214,10 +214,16 @@
 
       const byline = document.createElement("div");
       byline.className = "mhn-comment-byline";
-      const user = row.querySelector(".hnuser")?.cloneNode(true);
+      const user = row.querySelector('.comhead a[href^="user?id="]')?.cloneNode(true);
       const age = row.querySelector(".age a")?.cloneNode(true);
-      if (user) byline.append(user);
-      if (age) byline.append(separator(), age);
+      if (user) {
+        user.classList.add("hnuser");
+        byline.append(user);
+      }
+      if (age) {
+        if (user) byline.append(separator());
+        byline.append(age);
+      }
 
       head.append(collapse, byline);
 
